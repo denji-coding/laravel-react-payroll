@@ -67,7 +67,7 @@ test('users can logout', function () {
     $response = $this->actingAs($user)->post(route('logout'));
 
     $this->assertGuest();
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('login', ['logout' => 1]));
 });
 
 test('users are rate limited', function () {
@@ -81,4 +81,60 @@ test('users are rate limited', function () {
     ]);
 
     $response->assertTooManyRequests();
+});
+
+test('users with inactive status cannot login', function () {
+    $user = User::factory()->create(['status' => 'inactive']);
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors(['email']);
+});
+
+test('users with locked_until in future cannot login', function () {
+    $user = User::factory()->create(['locked_until' => now()->addMinutes(15)]);
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors(['email']);
+});
+
+test('successful login clears lockout', function () {
+    $user = User::factory()->create([
+        'failed_login_attempts' => 3,
+        'locked_until' => null,
+    ]);
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $user->refresh();
+    expect($user->failed_login_attempts)->toBe(0)
+        ->and($user->locked_until)->toBeNull();
+});
+
+test('account is locked after five failed login attempts', function () {
+    $user = User::factory()->create();
+
+    for ($i = 0; $i < 5; $i++) {
+        $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    $user->refresh();
+    expect($user->failed_login_attempts)->toBe(5)
+        ->and($user->locked_until)->not->toBeNull();
 });

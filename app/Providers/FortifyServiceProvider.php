@@ -3,13 +3,23 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Actions\Fortify\EnsureAccountCanLogin;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\LoginResponse;
+use App\Http\Responses\LogoutResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Actions\AttemptToAuthenticate;
+use Laravel\Fortify\Actions\CanonicalizeUsername;
+use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
+use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use Laravel\Fortify\Contracts\RedirectsIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -31,6 +41,26 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureAuthenticationPipeline();
+        $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
+        $this->app->singleton(LogoutResponseContract::class, LogoutResponse::class);
+    }
+
+    /**
+     * Configure the authentication pipeline (account status & lockout check before attempt).
+     */
+    private function configureAuthenticationPipeline(): void
+    {
+        Fortify::authenticateThrough(function ($request) {
+            return array_filter([
+                config('fortify.limiters.login') ? EnsureLoginIsNotThrottled::class : null,
+                config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
+                Features::enabled(Features::twoFactorAuthentication()) ? RedirectsIfTwoFactorAuthenticatable::class : null,
+                EnsureAccountCanLogin::class,
+                AttemptToAuthenticate::class,
+                PrepareAuthenticatedSession::class,
+            ]);
+        });
     }
 
     /**
@@ -50,7 +80,8 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
+            'status' => $request->session()->get('status')
+                ?? ($request->boolean('logout') ? __('auth.logout_success') : null),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [

@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 
 export default function DeleteUser() {
@@ -73,9 +74,8 @@ export default function DeleteUser() {
                                             Password
                                         </Label>
 
-                                        <Input
+                                        <PasswordInput
                                             id="password"
-                                            type="password"
                                             name="password"
                                             ref={passwordInput}
                                             placeholder="Password"

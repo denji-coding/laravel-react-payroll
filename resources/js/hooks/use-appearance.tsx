@@ -10,7 +10,7 @@ export type UseAppearanceReturn = {
 };
 
 const listeners = new Set<() => void>();
-let currentAppearance: Appearance = 'system';
+let currentAppearance: Appearance = 'light';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') return false;
@@ -66,8 +66,8 @@ export function initializeTheme(): void {
     if (typeof window === 'undefined') return;
 
     if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+        localStorage.setItem('appearance', 'light');
+        setCookie('appearance', 'light');
     }
 
     currentAppearance = getStoredAppearance();

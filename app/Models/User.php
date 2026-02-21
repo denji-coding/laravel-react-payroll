@@ -22,6 +22,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'status',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -47,6 +51,42 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'locked_until' => 'datetime',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until && $this->locked_until->isFuture();
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    public function clearLockout(): void
+    {
+        $this->forceFill([
+            'failed_login_attempts' => 0,
+            'locked_until' => null,
+        ])->save();
+    }
+
+    public function recordFailedLogin(): void
+    {
+        $attempts = $this->failed_login_attempts + 1;
+        $maxAttempts = (int) config('auth.lockout.max_attempts', 5);
+        $lockoutMinutes = (int) config('auth.lockout.decay_minutes', 15);
+
+        $this->forceFill([
+            'failed_login_attempts' => $attempts,
+            'locked_until' => $attempts >= $maxAttempts ? now()->addMinutes($lockoutMinutes) : null,
+        ])->save();
     }
 }

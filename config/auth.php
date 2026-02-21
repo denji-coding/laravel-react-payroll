@@ -112,4 +112,15 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Account Lockout (failed login attempts)
+    |--------------------------------------------------------------------------
+    */
+
+    'lockout' => [
+        'max_attempts' => (int) env('AUTH_LOCKOUT_ATTEMPTS', 5),
+        'decay_minutes' => (int) env('AUTH_LOCKOUT_DECAY_MINUTES', 15),
+    ],
+
 ];

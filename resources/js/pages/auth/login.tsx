@@ -4,6 +4,7 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { LogoLoading } from '@/components/logo-loading';
 import AuthLayout from '@/layouts/auth-layout';
@@ -32,7 +33,7 @@ export default function Login({
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
+                className="flex flex-col gap-4"
             >
                 {({ processing, errors }) => (
                     <>
@@ -45,8 +46,8 @@ export default function Login({
                                 <LogoLoading size="lg" />
                             </div>
                         )}
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
+                        <div className="grid gap-4">
+                            <div className="grid gap-1.5">
                                 <Label htmlFor="email">Email address</Label>
                                 <Input
                                     id="email"
@@ -61,7 +62,7 @@ export default function Login({
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid gap-1.5">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Password</Label>
                                     {canResetPassword && (
@@ -74,9 +75,8 @@ export default function Login({
                                         </TextLink>
                                     )}
                                 </div>
-                                <Input
+                                <PasswordInput
                                     id="password"
-                                    type="password"
                                     name="password"
                                     required
                                     tabIndex={2}
@@ -86,7 +86,7 @@ export default function Login({
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2">
                                 <Checkbox
                                     id="remember"
                                     name="remember"
@@ -97,7 +97,7 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="mt-2 w-full"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -119,7 +119,7 @@ export default function Login({
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mt-2 text-center text-sm font-medium text-green-600">
                     {status}
                 </div>
             )}
